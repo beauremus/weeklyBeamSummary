@@ -29,6 +29,42 @@
   <div class="iframe-container">
     <iframe src="https://www-ad.fnal.gov/cgi-bin/acl.pl?acl=~edstrom/acl/web/read_weekly_summary.acl" frameborder="0"></iframe>
   </div>
+  <script>
+    window.addEventListener("load", () => {
+      function findDate(string) {
+        return string.match(/\d{4}-\d{2}-\d{2}/)[0]
+      }
+
+      function formatDate(date) {
+        dateArr = date.split("-")
+        return `${dateArr[1]}/${dateArr[2]}/${dateArr[0]}`
+      }
+
+      startDate = findDate(document.querySelector("iframe").contentWindow.document.querySelector("u").textContent)
+
+
+      newContent = ["Date"]
+
+      newContent.push(formatDate(startDate))
+
+      tbody = document.querySelector("iframe").contentWindow.document.querySelector("tbody")
+
+      Array.from(tbody.children).forEach((currentValue, index, array) => {
+        sample = currentValue.removeChild(currentValue.lastChild)
+        currentValue.insertBefore(sample, currentValue.children[1])
+
+        content = "No Content"
+        if (index > 0) {
+          content = newContent[1]
+        } else {
+          content = newContent[0]
+        }
+        cell = document.createElement("td")
+        cell.textContent = content
+        currentValue.prepend(cell)
+      })
+    })
+  </script>
 </body>
 
 </html>
