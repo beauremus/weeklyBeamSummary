@@ -42,7 +42,6 @@
 
       startDate = findDate(document.querySelector("iframe").contentWindow.document.querySelector("u").textContent)
 
-
       newContent = ["Date"]
 
       newContent.push(formatDate(startDate))
@@ -51,6 +50,18 @@
 
       Array.from(tbody.children).forEach((currentValue, index, array) => {
         sample = currentValue.removeChild(currentValue.lastChild)
+
+        if (index === 0) {
+          sample.textContent += " pts"
+        } else {
+          sample.textContent = sample.textContent.replace("pts", "")
+        }
+
+        if (sample.colSpan === 4) {
+          const cell = document.createElement("td")
+          sample = cell
+        }
+
         currentValue.insertBefore(sample, currentValue.children[1])
 
         content = "No Content"
