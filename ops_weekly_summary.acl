@@ -1,0 +1,521 @@
+# General Declarations
+declare one_week integer = 604800	# The length of one week in seconds
+declare iSta integer			# Integer Status
+declare output_js boolean = true	# Output all parameters to a file in the form of javascript parameters
+declare output_xml boolean = true	# Output XML-formatted tags
+declare output_html boolean = true	# Output a pre-formatted table of the results
+declare output_generic boolean = true	# Output to generic filenames (to be able to find it with a static link)
+declare output_screen boolean = false	# Output pre-formatted table to stdout
+
+# Initial Date Selectors
+declare hours_ago integer = 0		# Specifies to look at a shift x hours ago in shift summary
+declare weeks_ago integer = 1		# Specifies to look at a specific week in weekly summary
+declare myNow date			# Time the script is being run
+declare myThen date			# A time picked weeks_ago before myNow
+declare sDate string			# The date expression for t0 for the purposes of building a file name
+declare sThen[10] string		# String containing the current date / time
+declare sTime[3] string			# String containing the current time [0]:[1]:[2]
+declare iTime[3] integer		# Integer array containing time in sTime
+declare iComp integer			# Combination time for comparison hhmmss
+declare ts string			# String formatted date ( [0] = 'yyyy-mm-dd' and [1] = hh:mm:ss' )
+
+# Device Query Setup
+declare devname string			# The ACNET device name being queried each round
+declare lq string			# Logger node name
+declare desc string			# Parameter description for the table
+declare evtq string			# Logger event requested
+declare lq_dt string			# Logger node name for separate downtime (if 'lq' it will use lq for both)
+declare evtq_dt string			# Logger event requested for separate downtime (if lq_dt[i] is 'lq' it will use lq for both)
+declare xp integer			# Order of precision to use for formatted x_ave
+declare clu integer			# Default (merge E12 with the number or leave alone) or clear the units
+declare xe integer			# Use exponential formatting on x_ave
+declare always_on integer		# Is this event nominally always in the TLG?
+declare xt float			# Threshold for downtime
+declare dt_format integer		# downtime format: 0 = ( hms & % ) , 1= ( Pulses Missed )
+declare fUptime float			# Floating Aggregate Uptime
+declare sAgg string			# Aggregate Downtime String
+declare Agg float			# Floating Aggregate Downtime
+declare iAgg[3] integer			# Integer array for aggregate time in shift covered by logger
+
+# Datalogger Variables
+declare log_success boolean		# last logging effort was successful
+declare t0 date				# Start of logging period
+declare t1 date				# End of logging period
+declare tq date				# Queried data timestamps
+declare xq float			# Queried data values
+declare x_tot float			# Integrated readback
+declare x_ave float			# Average readback
+declare s_ave string			# String formatted average readback
+declare xun string			# Units for integration
+declare xqlast float			# xq[j] : Value reported on previous loop
+declare tqlast date			# tq[j] : Timestamp on previous loop
+declare tqdown date			# Time of a transition from uptime to downtime
+declare tdi string			# String for date inversion
+declare n integer = 0			# Number of points returned from a logger
+declare ndev integer			# Total number of devices in Q:GETLOG
+declare firstpoint date			# Time of first point in a dataset
+declare lastpoint date			# Time of last point in a dataset
+declare utime integer			# Aggregate Uptime for an experiment
+declare dtime integer			# Aggregate Downtime for an experiment
+declare ndown integer			# Number of points where xq[i] falls below a threshold xt
+declare pdown float			# Percentage downtime (vs total number of logged points returned)
+declare sDown_1 string			# Part 1 of the downtime section (either the aggregate downtime or a label)
+declare sDown_2 string			# String of down number (% or number of missed pulses)
+
+# Loop Control
+declare main_loop_again boolean = true	# Master Loop control
+declare i integer = 0			# Master loop index
+declare loop_again boolean = true	# Loop control
+declare j integer			# Loop index
+
+# Output Prototypes
+declare proto string		= "<td style='padding:0px 4px 0px 4px;text-align:right;'>%i</td><td style='padding:0px 4px 0px 4px'>%s %s</td><td style='padding:0px 4px 0px 4px;text-align:right;'>%s</td><td style='padding:0px 4px 0px 4px;text-align:center;'>%s</td></tr>" # arguments n, s_part(w/x_tot), sDown_1, sDown
+declare proto_err string	= "<td colspan=4 style='padding:0px 4px 0px 4px'>%s</td>" # arguements: s_err
+declare proto_xml string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <tot>%.8e</tot> <ave>%.8e</ave> <units>%s</units> <ndown>%i</ndown> <dt>%.1f</dt> <pdt>%f</pdt> <n>%i</n> <logger>%s</logger> <evt>%s</evt> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], x_tot, x_avg, xun, Agg, pdown*100, n, i
+declare proto_xml_err string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <err>%s</err> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], s_err, i
+declare proto_link string	= "http://www-bd.fnal.gov/cgi-bin/mcr.pl?query=p&web=yes&dur=168&dev="
+
+# Destination File Variables
+declare js_param string	= "beam_summary_out"	# Name for the javascript parameter output
+declare c_name string	= "beam_summary"	# Class name for tables/rows/cells for output
+declare l_name string	= "WEEKLY_SUMMARY"	# Lock name for acl while writing output file
+declare f_dir string 	= "/usr/local/userb/weeklyBeamSummary"
+declare f_name string
+declare f_generic string = "weekly_summary"	# A generic file name to more easily access the most recent week's summary
+declare htm_out string	= ""			# The pre-formatted HTML table output
+declare js_out string	= ""			# Javascript parameters
+declare xml_out string	= ""			# XML-formatted output
+declare s_err string	= ""			# Error string to output for logging error
+declare s_part string	= ""			# String for building string for output
+declare s_icon string	= "" 			# either icon_good or icon_bad depending on tol
+
+# Testing flags
+declare integrateOff boolean = false
+
+if ( isIntegerString(string0) )
+	weeks_ago = string0
+endif
+
+on_error h_err
+
+myNow = now
+myThen = myNow - (3600 * 24 * 7 * weeks_ago)
+sThen = formatDateString("ctime", myThen)
+i = split(sThen, ,sThen)
+i = split(sThen[3],":",sTime)
+iTime[0] = sTime[0]
+iTime[1] = sTime[1]
+iTime[2] = sTime[2]
+
+# Find the beginning of the week... (Mon @ 00:00)
+declare myDays string = "Mon,Tue,Wed,Thu,Fri,Sat,Sun"
+i = split(myDays,",",myDays)
+i = -1
+while (loop_again)
+	i++
+	if myDays[i] = sThen[0]
+		loop_again = false
+	endif
+endwhile
+t0 = myThen - ( 86400 * i ) - ( 3600 * iTime[0] ) - ( 60 * iTime[1] ) - ( 1 * iTime[2] )
+t1 = t0 + one_week
+if (t1 > myNow)
+	t1 = myNow
+endif
+# t0 = t1 - 600 # for troubleshooting
+print "Collecting data from " t0 " to " t1
+sDate = formatDateString("compare", t0)
+i = split(sDate, ,sDate)
+i = split(sDate,"-",sDate[0])
+sDate = sprintf("%s-%s-%s",sDate[1],sDate[2],sDate[0])
+
+# Set up the list of devices to collect information on and the desired logger to go to...
+device_list/create GETLOG devices='    	B:CHG1,		E:TR101D,	E:TOR860,	F:MTEST,	F:MIPP,		D:TOR704,	D:G2POT'
+str_split '				Booster,	NuMI,		BNB,		MTest,		MCenter,	MuonOffTgt,	MuonTargetNew'		","	desc
+str_split '				BClk,		Numi,		BClk,		Swyd,		FixTr2,		Muon2,		Muon4'			","	lq
+str_split '				e,10,e,38;	e,AE,e,900;	e,1D,h,60;	e,36,s,200;	e,37,e,0;	e,F6,e,8;	e,93,e,100'		";"	evtq
+str_split '				lq,		lq,		lq,		lq,		lq,		lq,		lq'			","	lq_dt
+str_split '				def;		def;		def;		def;		def;		def;		def'			";"	evtq_dt
+str_split '				1,		1,		1,		2e9,		1e8,		1,		.1'			","	xt
+str_split '				1,		1,		1,		0,		0,		1,		1'			","	always_on
+str_split '				3,		3,		3,		3,		3,		3,		3'			","	xp
+str_split '				1,		1,		1,		1,		1,		1,		1'			","	xe
+str_split '				0,		0,		0,		1,		1,		0,		0'			","	clu
+str_split '				0,		0,		0,		1,		1,		0,		0'			","	dt_format
+device_list/size/output=variable:ndev GETLOG
+
+# Loop through the device list and build strings with pre-formatted html and javascript-formatted variables for output
+i = 0
+htm_out = sprintf("<u>Beam Delivered / Downtime Summary for the week starting %s</u>", formatDateString("compare",t0))
+htm_out = sprintf("%s<table style='background:#fff;border:solid;border-color:#00f;font-weight:bold;font-size:11px;font-family:Verdana,Arieal,Helvetica,Geneva,san-serif;'>", htm_out)
+htm_out = sprintf("%s<tr style='background:#aac;text-align:center;'><td>Date</td><td width=80>Destination</td><td>Sample Size pts</td><td>Intensity</td><td colspan=2>Downtime (h:mm:ss)</td></tr>", htm_out)
+js_out = sprintf("t_0='%s';t_1='%s';",t0,t1)
+xml_out = sprintf("<?xml version='1.0'?> <summary> <t0>%s</t0> <t1>%s</t1>", t0, t1)
+while (main_loop_again)
+	devname = name(Q:GETLOG)
+	devus = replaceString(":","_",devname)
+	log_success = false
+	s_icon = "icon_bad"
+
+	# Go collect the data from the datalogger and figure downtime
+	on_error herr
+	gosub get_logger_data
+	on_error
+
+	# If we want a separate logger for total intensity and downtime, save the total intensity in a temp variable and do it agian
+	if ( (lq_dt[i] ne "lq") and (log_success = true) )
+		lq[i] = lq_dt[i]
+		evtq[i] = evtq_dt[i]
+		hold_x_tot = x_tot
+		hold_x_ave = x_ave
+		hold_n = n
+
+		# Collect the data from the logger for use with downtime
+		on_error herr
+		gosub get_logger_data
+		on_error
+
+		x_tot = hold_x_tot
+		x_ave = hold_x_ave
+		n = hold_n
+	endif
+
+	startDateTimeString = formatDateString("compare",t0)
+	str_split startDateTimeString ' ' dateFromDateTime
+	str_split dateFromDateTime '-' datePieces
+	excelDateString = datePieces[1] + "/" + datePieces[2] + "/" + datePieces[0]
+
+	htm_out = sprintf("%s<tr><td>%s</td><td style='padding:0px 4px 0px 4px'>%s</td>",htm_out,excelDateString,desc[i])
+	if (log_success)
+		# Decide wheter to output x_ave / x_tot as an exponent of floating point
+		if (xe[i])
+			s_ave = sprintf("%%.%i%c",xp[i],"e")
+		else
+			s_ave = sprintf("%%.%i%c",xp[i],"f")
+		endif
+		print "Found data for " devname " : " x_ave " " xun " (" n "pts / " ndown " down)"
+		print
+
+		# Layout Javascript parameters
+		if ( output_js )
+				s_part = sprintf(s_ave, x_ave)
+			js_out = sprintf("%s%s_ave='%s';",			js_out,	devus,	s_part		)
+				s_part = sprintf(s_ave, x_tot)
+			js_out = sprintf("%s%s_tot='%s';",			js_out,	devus,	s_part		)
+			js_out = sprintf("%s%s_ndown='%i';",			js_out,	devus,	ndown		)
+			js_out = sprintf("%s%s_downtime='%.0f';",		js_out,	devus,	Agg		)
+			js_out = sprintf("%s%s_percent_downtime='%.4f';",	js_out,	devus,	(pdown*100)	)
+			js_out = sprintf("%s%s_sample_size='%i';",		js_out,	devus,	n		)
+			js_out = sprintf("%s%s_logger='%s';",			js_out,	devus,	lq[i]		)
+			js_out = sprintf("%s%s_evt='%s';",			js_out,	devus,	evtq[i]		)
+			js_out = sprintf("%s%s_unit='%s';",			js_out,	devus,	xun		)
+		endif
+
+		# Layout XML
+		if ( output_xml )
+			s_part = sprintf( proto_xml, i, name(Q:GETLOG), desc[i], x_tot, x_ave, xun, ndown, Agg, pdown*100, n, lq[i], evtq[i], i)
+			xml_out = sprintf("%s%s",xml_out,s_part)
+		endif
+
+		# Layout HTML
+		if ( output_html )
+			if ( dt_format[i] = 0 ) # Standard hhh:mm:ss (xx%)
+				sDown_1 = sAgg
+				sDown_2 = sprintf("%.1f&#037;",pdown*100)
+			elseif ( dt_format[i] = 1 )
+				sDown_1 = "Missed:"
+				sDown_2 = sprintf("%i evts",ndown)
+			endif
+			s_part = sprintf(s_ave, x_tot)
+			s_part = sprintf(proto, n, s_part, xun, sDown_1, sDown_2)
+			htm_out = sprintf("%s%s",htm_out,s_part)
+		endif
+	else
+		# Account for an error in the readback...
+		print s_err
+		print
+
+		# ... in Javascript
+		if ( output_js )
+			js_out = sprintf("%s%s_err='%s';",js_out,devus,s_err)
+		endif
+
+		# ... in xml
+		if ( output_xml )
+			s_part = sprintf( proto_xml_err, i, name(Q:GETLOG), desc[i], s_err, i )
+			xml_out = sprintf("%s%s",xml_out,s_part)
+		endif
+
+		# ... in HTML
+		if ( output_html )
+			s_part = sprintf(proto_err, s_err)
+			htm_out = sprintf("%s%s",htm_out,s_part)
+			# htm_out = sprintf("%s%s",htm_out,"0")
+		endif
+	endif
+
+	if (i++ < ndev)
+		device_list/inc GETLOG
+	else
+		main_loop_again = false
+	endif
+endwhile
+htm_out = sprintf("%s</table>",htm_out)
+xml_out = sprintf("%s</summary>",xml_out)
+
+declare f_sz integer
+declare f_id integer
+
+lock l_name
+if (output_html)
+	print
+	f_name = sprintf("%s/%s.2.htm",f_dir,sDate)
+	f_id = fopen(f_name, 'w')
+	f_sz = fprintf(f_id, htm_out)
+	j = fclose(f_id)
+	print "Preformatted-HTML (" f_sz " bytes) exported to " f_name
+	if (output_generic)
+		f_name = sprintf("%s/%s.htm",f_dir,f_generic)
+		f_id = fopen(f_name, 'w')
+		f_sz = fprintf(f_id, htm_out)
+		j = fclose(f_id)
+	endif
+endif
+
+if (output_xml)
+	print
+	f_name = sprintf("%s/%s.2.xml",f_dir,sDate)
+	f_id = fopen(f_name, 'w')
+	f_sz = fprintf(f_id, xml_out)
+	j = fclose(f_id)
+	print "XML-formatted tags (" f_sz " bytes) exported to " f_name
+	if (output_generic)
+		f_name = sprintf("%s/%s.xml",f_dir,f_generic)
+		f_id = fopen(f_name, 'w')
+		f_sz = fprintf(f_id, xml_out)
+		j = fclose(f_id)
+	endif
+endif
+
+if (output_js)
+	print
+	f_name = sprintf("%s/%s.2.js",f_dir,sDate)
+	f_id = fopen(f_name, 'w')
+	f_sz = fprintf(f_id, js_out)
+	j = fclose(f_id)
+	print "Javascript parameters (" f_sz " bytes) exported to " f_name
+	if (output_generic)
+		f_name = sprintf("%s/%s.js",f_dir,f_generic)
+		f_id = fopen(f_name, 'w')
+		f_sz = fprintf(f_id, js_out)
+		j = fclose(f_id)
+	endif
+endif
+
+run/no_error_exit '/bin/chmod -f 666 /usr/local/cbs_files/cns_write/acl/data_files/ops_weekly_summary/*.* &'
+
+unlock l_name
+
+if (output_screen)
+	print
+	print "The following is the HTML output:"
+	print htm_out
+endif
+
+exit
+
+# Error Handling during logging operations: Note it and move on...
+herr:
+	s_err = sprintf("%s%s_err='Error (%s) - No Data Returned';",htm_out,devname,$_error_status)
+	return
+exit
+
+# Generic logger subroutine
+get_logger_data:
+	xun = units(Q:GETLOG)
+	iSta = arrayFill(xq, 0)
+	iSta = arrayFill(tq, 0)
+	x_ave = 0
+	x_tot = 0
+	tqlast = 1
+	ndown = 0
+	print "Getting data for " name(Q:GETLOG) " ( " lq[i] " : " evtq[i] " )"
+
+	# Do the appropriate logger_get based on whether or not we specify an event and/or logger
+	if ( lq[i] ne "def"  )
+		if ( evtq[i] ne "def" )
+			logger_get/dynamic/node=lq[i]/data_event=evtq[i]/start=t0/end=t1/timestamps=tq/values=xq/num_values=n/nodisp Q:GETLOG
+			s_err = sprintf("No Data returned for %s from %s (%s)", devname, lq[i], evtq[i])
+		else
+			logger_get/dynamic/node=lq[i]/start=t0/end=t1/timestamps=tq/values=xq/num_values=n/nodisp Q:GETLOG
+			s_err = sprintf("No Data returned for %s from %s", devname, lq[i])
+		endif
+	else
+		logger_get/dynamic/start=t0/end=t1/timestamps=tq/values=xq/num_values=n/nodisp Q:GETLOG
+		s_err = sprintf("No Data returned for %s", devname)
+
+	endif
+	print n " points returned."
+
+	if (integrateOff)
+		x_ave = 0
+		x_tot = 0
+		pdown = 1
+		sDown_1 = "No Data"
+		log_success = false
+		return
+	endif
+
+	# If there is no data, set the appropriate variables and return
+	if ( n = 0 )
+		x_ave = 0
+		x_tot = 0
+		pdown = 1
+		sDown_1 = "No Data"
+		log_success = false
+		return
+	endif
+
+	# Start with 100% uptime
+	fUptime = (t1 - t0)
+
+	# Find average and integrated intensity/downtime
+	xqlast = 0
+	tqdown = t0
+	tqlast = t0
+	j = 0
+	loop_again = true
+	while (loop_again)
+		if (always_on[i])
+			# If this particular beam event is always supposed to be in the timeline,
+			# Check to see if we have beam on point xq[j]
+			if (xq[j] > xt[i])
+				# If so, add this beam to the integration
+				x_tot = x_tot + xq[j]
+
+				# If this is a transition from down to up then subtract the downtime from fUptime
+				if (xqlast < xt[i])
+					tdiff = tq[j] - tqdown
+					if (tdiff > 60)
+						fUptime = fUptime - tdiff
+					endif
+				endif
+			else # If we don't have beam on point xq[j]
+				# Iterate the number of downtime points
+				ndown++
+
+				# And if this is a transition from up to down then set tqdown
+				if (xqlast > xt[i])
+					tqdown = tq[j]
+				endif
+			endif
+		else
+			# Just integrate or count a down point
+			if (xq[j] > xt[i])
+				x_tot = x_tot + xq[j]
+			else
+				ndown++
+			endif
+		endif
+
+		# Get set for next loop
+		xqlast = xq[j]
+		tqlast = tq[j]
+
+		# If this is the last point...
+		if (j++ >= n)
+			loop_again = false
+		endif
+	endwhile
+
+	# Finish accounting for downtime to t1 and find the percentage of downtime
+	if (always_on[i])
+		# Count the time between tqlast and t1 as downtime
+		fUptime = fUptime - (t1 - tqlast)
+
+		# Put it in terms of downtime rather than uptime
+		Agg = (t1 - t0) - fUptime
+
+		# Find the percentage of downtime total
+		pdown = Agg / (t1 - t0)
+	else
+		if (n > ndown)
+			iSta = n-1
+			pdown = (ndown/n)
+			Agg = pdown * (tq[iSta] - tq[0])
+		else
+			x_ave = 0
+			x_tot = 0
+			pdown = 1
+			sDown_1 = "No Data"
+			log_success = false
+			return
+		endif
+	endif
+
+	# At some point cut off and say there was no (significant) downtime...
+	if ( Agg < 20 ) #... like 20 seconds total. This should take care of a normal gap between t0 and the first event as well as t1 and the last event
+		Agg = 0
+		pdown = 0
+	endif
+	x_ave = x_tot / n
+
+	# Format the aggregate downtime
+	iAgg[0] = (Agg / 3600)
+	if (iAgg[0] > 0)
+		sAgg = sprintf("%i:",iAgg[0])
+	else
+		sAgg = sprintf("0:")
+	endif
+
+	iAgg[1] = ((Agg - (iAgg[0]*3600))/60)
+	if (iAgg[1] > 10)
+		sAgg = sprintf("%s%i:",sAgg,iAgg[1])
+	elseif (iAgg[1] > 0 && iAgg[1] < 10)
+		sAgg = sprintf("%s0%i:",sAgg,iAgg[1])
+	else
+		sAgg = sprintf("%s00:",sAgg)
+	endif
+
+	iAgg[2] = ((Agg - (iAgg[0]*3600) - (iAgg[1]*60))/1)
+	if (iAgg[2] > 10)
+		sAgg = sprintf("%s%i",sAgg,iAgg[2])
+	elseif (iAgg[2] > 0 && iAgg[2] < 10)
+		sAgg = sprintf("%s0%i",sAgg,iAgg[2])
+	else
+		sAgg = sprintf("%s00",sAgg)
+	endif
+
+	# Build units into the reading if the units are an exponent (ie "E12")
+	if ( clu[i] = 0 and isFloatString( stripSpaces( sprintf("%f%s",x_tot,xun) ) ) )
+		x_tot = sprintf("%f%s",x_tot,xun)
+		x_ave = sprintf("%f%s",x_ave,xun)
+		xun = ""
+	endif
+
+	# Strip units if they make the integration confusing (ie "ppp" since it's integrating over many pulses)
+	if ( clu[i] = 1 )
+		xun = ""
+	endif
+
+	if (x_ave = 0)
+		log_success = false
+	else
+		s_icon = "icon_good"
+		log_success = true
+	endif
+	return
+exit
+
+h_err:
+error_label1:
+    print "An error occurred at line " $_error_line " - status = " $_error_status
+    if $_error_status = DPM_PEND and $_error_count < 3
+	retry				# try to read the data again
+    endif
+    return
+exit
+
+
+
+
