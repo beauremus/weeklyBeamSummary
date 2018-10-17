@@ -1,11 +1,13 @@
 #!/usr/local/bin/perl
-print("Content-Type: text/html\n\n");
 
-my $filename = 'weekly_summary.htm';
+my $filename = "weekly_summary.htm";
 open (FILE, $filename) || die "Cannot open '$filename': $!";
 my $file_as_string = join '', <FILE>;
+# my $file_as_string = 'Hello world!';
 
-print('<!DOCTYPE html>
+print "Content-Type: text/html\n\n";
+
+print '<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -13,13 +15,29 @@ print('<!DOCTYPE html>
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Weekly Beam Summary</title>
 </head>
-<body>');
+<body>';
 
-print($file_as_string);
+print $file_as_string;
 
-print('
+print '
   <script>
+    function findDate(string) {
+      return string.match(/\d{4}-\d{2}-\d{2}/)[0]
+    }
+
+    function formatDate(date) {
+      dateArr = date.split("-")
+      return `${dateArr[1]}/${dateArr[2]}/${dateArr[0]}`
+    }
+
+    startDate = findDate(document.querySelector("u").textContent)
+
+    newContent = ["Date"]
+
+    newContent.push(formatDate(startDate))
+
     const tbody = document.querySelector("tbody")
+
     Array.from(tbody.children).forEach((currentValue, index, array) => {
       sample = currentValue.removeChild(currentValue.lastChild)
 
@@ -48,6 +66,6 @@ print('
     })
   </script>
 </body>
-</html>');
+</html>';
 
 print "\n";
