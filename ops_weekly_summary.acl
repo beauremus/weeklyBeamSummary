@@ -262,6 +262,23 @@ endwhile
 htm_out = sprintf("%s</table>",htm_out)
 xml_out = sprintf("%s</summary>",xml_out)
 
+# Set error cells to 0
+htm_out = sprintf("$s<script>
+	tbody = document.querySelector("tbody")
+	Array.from(tbody.children).forEach(currentValue => {
+			cells = [0, 0, 0]
+			if (currentValue.lastChild.colSpan === 4) {
+					currentValue.lastChild.textContent = 0
+					currentValue.lastChild.colSpan = ""
+					cells.forEach(_ => {
+							cell = document.createElement("td")
+							cell.textContent = 0
+							currentValue.appendChild(cell)
+					})
+			}
+	})
+</script>", htm_out)
+
 declare f_sz integer
 declare f_id integer
 
@@ -273,13 +290,13 @@ fileDate = dateTimePieces[0]
 lock l_name
 if (output_html)
 	print
-	f_name = sprintf("%s/%s.htm",f_dir,fileDate)
+	f_name = sprintf("%s/%s.html",f_dir,fileDate)
 	f_id = fopen(f_name, 'w')
 	f_sz = fprintf(f_id, htm_out)
 	j = fclose(f_id)
 	print "Preformatted-HTML (" f_sz " bytes) exported to " f_name
 	if (output_generic)
-		f_name = sprintf("%s/%s.htm",f_dir,f_generic)
+		f_name = sprintf("%s/%s.html",f_dir,f_generic)
 		f_id = fopen(f_name, 'w')
 		f_sz = fprintf(f_id, htm_out)
 		j = fclose(f_id)
