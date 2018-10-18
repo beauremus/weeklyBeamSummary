@@ -250,7 +250,6 @@ while (main_loop_again)
 		if ( output_html )
 			s_part = sprintf(proto_err, s_err)
 			htm_out = sprintf("%s%s",htm_out,s_part)
-			# htm_out = sprintf("%s%s",htm_out,"0")
 		endif
 	endif
 
@@ -266,10 +265,15 @@ xml_out = sprintf("%s</summary>",xml_out)
 declare f_sz integer
 declare f_id integer
 
+nowString = formatDateString("compare", t0)
+str_split nowString ' ' dateAndTime
+str_split dateAndTime[0] '-' dateTimePieces
+fileDate = dateTimePieces[0]
+
 lock l_name
 if (output_html)
 	print
-	f_name = sprintf("%s/%s.2.htm",f_dir,sDate)
+	f_name = sprintf("%s/%s.htm",f_dir,fileDate)
 	f_id = fopen(f_name, 'w')
 	f_sz = fprintf(f_id, htm_out)
 	j = fclose(f_id)
@@ -284,7 +288,7 @@ endif
 
 if (output_xml)
 	print
-	f_name = sprintf("%s/%s.2.xml",f_dir,sDate)
+	f_name = sprintf("%s/%s.xml",f_dir,fileDate)
 	f_id = fopen(f_name, 'w')
 	f_sz = fprintf(f_id, xml_out)
 	j = fclose(f_id)
@@ -299,7 +303,7 @@ endif
 
 if (output_js)
 	print
-	f_name = sprintf("%s/%s.2.js",f_dir,sDate)
+	f_name = sprintf("%s/%s.js",f_dir,fileDate)
 	f_id = fopen(f_name, 'w')
 	f_sz = fprintf(f_id, js_out)
 	j = fclose(f_id)
