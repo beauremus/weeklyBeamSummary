@@ -264,18 +264,18 @@ xml_out = sprintf("%s</summary>",xml_out)
 
 # Set error cells to 0
 htm_out = sprintf("$s<script>
-	tbody = document.querySelector("tbody")
+	tbody = document.querySelector(\"tbody\")
 	Array.from(tbody.children).forEach(currentValue => {
-			cells = [0, 0, 0]
-			if (currentValue.lastChild.colSpan === 4) {
-					currentValue.lastChild.textContent = 0
-					currentValue.lastChild.colSpan = ""
-					cells.forEach(_ => {
-							cell = document.createElement("td")
-							cell.textContent = 0
-							currentValue.appendChild(cell)
-					})
-			}
+		cells = [0, 0, 0]
+		if (currentValue.lastChild.colSpan === 4) {
+			currentValue.lastChild.textContent = 0
+			currentValue.lastChild.colSpan = ""
+			cells.forEach(_ => {
+				cell = document.createElement(\"td\")
+				cell.textContent = 0
+				currentValue.appendChild(cell)
+			})
+		}
 	})
 </script>", htm_out)
 
