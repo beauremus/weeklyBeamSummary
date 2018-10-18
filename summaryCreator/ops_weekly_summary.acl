@@ -5,6 +5,7 @@ declare output_js boolean = true	# Output all parameters to a file in the form o
 declare output_xml boolean = true	# Output XML-formatted tags
 declare output_html boolean = true	# Output a pre-formatted table of the results
 declare output_generic boolean = true	# Output to generic filenames (to be able to find it with a static link)
+declare output_index boolean = true	# Output to generic filenames (to be able to find it with a static link)
 declare output_screen boolean = false	# Output pre-formatted table to stdout
 
 # Initial Date Selectors
@@ -300,6 +301,12 @@ if (output_html)
 		f_sz = fprintf(f_id, htm_out)
 		j = fclose(f_id)
 	endif
+	if (output_index)
+		f_name = sprintf("%s/%s.html",f_dir,"index")
+		f_id = fopen(f_name, 'w')
+		f_sz = fprintf(f_id, htm_out)
+		j = fclose(f_id)
+	endif
 endif
 
 if (output_xml)
@@ -332,7 +339,7 @@ if (output_js)
 	endif
 endif
 
-run/no_error_exit '/bin/chmod -f 666 /usr/local/cbs_files/cns_write/acl/data_files/ops_weekly_summary/*.* &'
+# run/no_error_exit '/bin/chmod -f 666 /usr/local/cbs_files/cns_write/acl/data_files/ops_weekly_summary/*.* &'
 
 unlock l_name
 
