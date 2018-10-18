@@ -269,7 +269,7 @@ htm_out = sprintf("$s<script>
 		cells = [0, 0, 0]
 		if (currentValue.lastChild.colSpan === 4) {
 			currentValue.lastChild.textContent = 0
-			currentValue.lastChild.colSpan = ""
+			currentValue.lastChild.colSpan = \"\"
 			cells.forEach(_ => {
 				cell = document.createElement(\"td\")
 				cell.textContent = 0
