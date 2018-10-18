@@ -284,8 +284,7 @@ declare f_id integer
 
 nowString = formatDateString("compare", t0)
 str_split nowString ' ' dateAndTime
-str_split dateAndTime[0] '-' dateTimePieces
-fileDate = dateTimePieces[0]
+fileDate = dateAndTime[0]
 
 lock l_name
 if (output_html)
