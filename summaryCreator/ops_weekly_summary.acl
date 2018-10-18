@@ -263,7 +263,7 @@ htm_out = sprintf("%s</table>",htm_out)
 xml_out = sprintf("%s</summary>",xml_out)
 
 # Set error cells to 0
-htm_out = sprintf("$s<script>
+htm_out = sprintf("%s<script>
 	tbody = document.querySelector(\"tbody\")
 	Array.from(tbody.children).forEach(currentValue => {
 		cells = [0, 0, 0]
