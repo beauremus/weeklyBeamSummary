@@ -19,8 +19,7 @@
   <script>
     function getFile() {
       const yearMonthDay = document.querySelector("#startDate").value
-      const yearMonthDayArray = yearMonthDay.split("-")
-      window.location.href = `https://www-ad.fnal.gov/cgi-bin/acl.pl?acl=~beau/acl/read_weekly_summary.acl+"${yearMonthDayArray[1]}"+"${yearMonthDayArray[2]}"+"${yearMonthDayArray[0]}"`
+      window.location.href = `/userb/weeklyBeamSummary/${yearMonthDay}.html`
     }
   </script>
 </body>

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+rsync dateSelect.html clxsrv:/usr/local/userb/weeklyBeamSummary/
+rsync ops_weekly_summary.acl clxsrv:/export/home1/beau/acl/web/weeklyBeamSummary/
