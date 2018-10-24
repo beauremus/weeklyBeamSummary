@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Beam Summary</title>
+  <script src="./date_fns/date_fns.min.js"></script>
 </head>
 
 <body>
@@ -18,7 +19,7 @@
   </main>
   <script>
     function getFile() {
-      const yearMonthDay = document.querySelector("#startDate").value
+      const yearMonthDay = dateFns.setDay(new Date(new Date(document.querySelector("#startDate").value)), 0).toISOString().split("T")[0]
       window.location.href = `/userb/weeklyBeamSummary/${yearMonthDay}.html`
     }
   </script>
