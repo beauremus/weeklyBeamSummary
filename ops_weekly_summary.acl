@@ -71,7 +71,7 @@ declare j integer			# Loop index
 
 # Output Prototypes
 declare proto string		= "<td style='padding:0px 4px 0px 4px;text-align:right;'>%i</td><td style='padding:0px 4px 0px 4px'>%s %s</td><td style='padding:0px 4px 0px 4px;text-align:right;'>%s</td><td style='padding:0px 4px 0px 4px;text-align:center;'>%s</td></tr>" # arguments n, s_part(w/x_tot), sDown_1, sDown
-declare proto_err string	= "<td colspan=4 style='padding:0px 4px 0px 4px'>%s</td>" # arguements: s_err
+declare proto_err string	= "<td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td>" # arguements: s_err, s_err, s_err, s_err
 declare proto_xml string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <tot>%.8e</tot> <ave>%.8e</ave> <units>%s</units> <ndown>%i</ndown> <dt>%.1f</dt> <pdt>%f</pdt> <n>%i</n> <logger>%s</logger> <evt>%s</evt> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], x_tot, x_avg, xun, Agg, pdown*100, n, i
 declare proto_xml_err string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <err>%s</err> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], s_err, i
 declare proto_link string	= "http://www-bd.fnal.gov/cgi-bin/mcr.pl?query=p&web=yes&dur=168&dev="
@@ -249,7 +249,7 @@ while (main_loop_again)
 
 		# ... in HTML
 		if ( output_html )
-			s_part = sprintf(proto_err, s_err)
+			s_part = sprintf(proto_err, s_err, s_err, s_err, s_err)
 			htm_out = sprintf("%s%s",htm_out,s_part)
 		endif
 	endif
@@ -262,23 +262,6 @@ while (main_loop_again)
 endwhile
 htm_out = sprintf("%s</table>",htm_out)
 xml_out = sprintf("%s</summary>",xml_out)
-
-# Set error cells to 0
-htm_out = sprintf("%s<script>
-	tbody = document.querySelector(\"tbody\")
-	Array.from(tbody.children).forEach(currentValue => {
-		cells = [0, 0, 0]
-		if (currentValue.lastChild.colSpan === 4) {
-			currentValue.lastChild.textContent = 0
-			currentValue.lastChild.colSpan = \"\"
-			cells.forEach(_ => {
-				cell = document.createElement(\"td\")
-				cell.textContent = 0
-				currentValue.appendChild(cell)
-			})
-		}
-	})
-</script>", htm_out)
 
 declare f_sz integer
 declare f_id integer
@@ -372,7 +355,8 @@ get_logger_data:
 	if ( lq[i] ne "def"  )
 		if ( evtq[i] ne "def" )
 			logger_get/dynamic/node=lq[i]/data_event=evtq[i]/start=t0/end=t1/timestamps=tq/values=xq/num_values=n/nodisp Q:GETLOG
-			s_err = sprintf("No Data returned for %s from %s (%s)", devname, lq[i], evtq[i])
+			# s_err = sprintf("No Data returned for %s from %s (%s)", devname, lq[i], evtq[i])
+			s_err = sprintf("0")
 		else
 			logger_get/dynamic/node=lq[i]/start=t0/end=t1/timestamps=tq/values=xq/num_values=n/nodisp Q:GETLOG
 			s_err = sprintf("No Data returned for %s from %s", devname, lq[i])
