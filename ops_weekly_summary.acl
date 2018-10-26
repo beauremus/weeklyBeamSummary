@@ -71,7 +71,7 @@ declare j integer			# Loop index
 
 # Output Prototypes
 declare proto string		= "<td style='padding:0px 4px 0px 4px;text-align:right;'>%i</td><td style='padding:0px 4px 0px 4px'>%s %s</td><td style='padding:0px 4px 0px 4px;text-align:right;'>%s</td><td style='padding:0px 4px 0px 4px;text-align:center;'>%s</td></tr>" # arguments n, s_part(w/x_tot), sDown_1, sDown
-declare proto_err string	= "<td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td>" # arguements: s_err, s_err, s_err, s_err
+declare proto_err string	= "<td style='padding:0px 4px 0px 4px;text-align:right;'>%s</td><td style='padding:0px 4px 0px 4px'>%s</td><td style='padding:0px 4px 0px 4px;text-align:right;'>%s</td><td style='padding:0px 4px 0px 4px;text-align:center;'>%s</td>" # arguements: s_err, s_err, s_err, s_err
 declare proto_xml string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <tot>%.8e</tot> <ave>%.8e</ave> <units>%s</units> <ndown>%i</ndown> <dt>%.1f</dt> <pdt>%f</pdt> <n>%i</n> <logger>%s</logger> <evt>%s</evt> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], x_tot, x_avg, xun, Agg, pdown*100, n, i
 declare proto_xml_err string	= "<dev_%i> <dev>%s</dev> <desc>%s</desc> <err>%s</err> </dev_%i>" # arguments: i, name(Q:GETLOG), desc[i], s_err, i
 declare proto_link string	= "http://www-bd.fnal.gov/cgi-bin/mcr.pl?query=p&web=yes&dur=168&dev="
@@ -80,7 +80,7 @@ declare proto_link string	= "http://www-bd.fnal.gov/cgi-bin/mcr.pl?query=p&web=y
 declare js_param string	= "beam_summary_out"	# Name for the javascript parameter output
 declare c_name string	= "beam_summary"	# Class name for tables/rows/cells for output
 declare l_name string	= "WEEKLY_SUMMARY"	# Lock name for acl while writing output file
-declare f_dir string 	= "/usr/local/userb/weeklyBeamSummary"
+declare f_dir string
 declare f_name string
 declare f_generic string = "weekly_summary"	# A generic file name to more easily access the most recent week's summary
 declare htm_out string	= ""			# The pre-formatted HTML table output
@@ -92,6 +92,13 @@ declare s_icon string	= "" 			# either icon_good or icon_bad depending on tol
 
 # Testing flags
 declare integrateOff boolean = false
+declare localOuput boolean = false
+
+if ( localOuput )
+	f_dir = "./output"
+else
+	f_dir = "/usr/local/userb/weeklyBeamSummary"
+endif
 
 if ( isIntegerString(string0) )
 	weeks_ago = string0
@@ -149,7 +156,7 @@ device_list/size/output=variable:ndev GETLOG
 i = 0
 htm_out = sprintf("<u>Beam Delivered / Downtime Summary for the week starting %s</u>", formatDateString("compare",t0))
 htm_out = sprintf("%s<table style='background:#fff;border:solid;border-color:#00f;font-weight:bold;font-size:11px;font-family:Verdana,Arial,Helvetica,Geneva,san-serif;'>", htm_out)
-htm_out = sprintf("%s<tr style='background:#aac;text-align:center;'><td>Date</td><td width=80>Destination</td><td>Sample Size pts</td><td>Intensity</td><td colspan=2>Downtime (h:mm:ss)</td></tr>", htm_out)
+htm_out = sprintf("%s<tr style='background:#aac;text-align:center;'><td>Date</td><td width=80>Destination</td><td>Sample Size pts</td><td>Intensity</td><td>Downtime (h:mm:ss)</td><td>Downtime (percent)</td></tr>", htm_out)
 js_out = sprintf("t_0='%s';t_1='%s';",t0,t1)
 xml_out = sprintf("<?xml version='1.0'?> <summary> <t0>%s</t0> <t1>%s</t1>", t0, t1)
 while (main_loop_again)
