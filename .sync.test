@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+rsync ops_weekly_summary.acl clxsrv:/export/home1/beau/acl/web/test/weeklyBeamSummary/
