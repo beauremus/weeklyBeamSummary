@@ -148,7 +148,7 @@ device_list/size/output=variable:ndev GETLOG
 # Loop through the device list and build strings with pre-formatted html and javascript-formatted variables for output
 i = 0
 htm_out = sprintf("<u>Beam Delivered / Downtime Summary for the week starting %s</u>", formatDateString("compare",t0))
-htm_out = sprintf("%s<table style='background:#fff;border:solid;border-color:#00f;font-weight:bold;font-size:11px;font-family:Verdana,Arieal,Helvetica,Geneva,san-serif;'>", htm_out)
+htm_out = sprintf("%s<table style='background:#fff;border:solid;border-color:#00f;font-weight:bold;font-size:11px;font-family:Verdana,Arial,Helvetica,Geneva,san-serif;'>", htm_out)
 htm_out = sprintf("%s<tr style='background:#aac;text-align:center;'><td>Date</td><td width=80>Destination</td><td>Sample Size pts</td><td>Intensity</td><td colspan=2>Downtime (h:mm:ss)</td></tr>", htm_out)
 js_out = sprintf("t_0='%s';t_1='%s';",t0,t1)
 xml_out = sprintf("<?xml version='1.0'?> <summary> <t0>%s</t0> <t1>%s</t1>", t0, t1)
